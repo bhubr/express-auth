@@ -26,41 +26,49 @@ app.post('/login', (req, res) => {
     return res.status(401).json({ error: 'Bad Dobby' })
   }
   req.session.user = foundUser
-  // res.json(foundUser)
-  res.redirect('/')
+  res.json(foundUser)
 })
 
 app.get('/login', (req, res) => {
-  res.send(`
+  res.send(
+  /* @html */`
     <form method="POST" action="/login">
       <p>Hint: try username foobar with pass FooBar, or username jondoe with pass JonDoe</p>
       <input name="username" placeholder="username" />
       <input name="password" placeholder="password" />
       <button type="submit" class="button">Submit</button>
     </form>
+    <h6>Réponse du serveur</h6>
+    <div id="result"></div>
     <script>
-      // const form = document.getElementsByTagName('form')[0]
-      // form.addEventListener('submit', evt => {
-      //   evt.preventDefault()
-      //   const data = {}
-      //   const inputs = document.getElementsByTagName('input')
-      //   for(input of inputs) {
-      //     data[input.name] = input.value
-      //   }
-      //   fetch('/login', {
-      //     method: 'POST',
-      //     headers: {
-      //       Accept: 'application/json',
-      //       'Content-Type': 'application/json'
-      //     },
-      //     credentials: true,
-      //     body: JSON.stringify(data)
-      //   })
-      //   .then(r => r.json())
-      //   .then(data => {
-      //     fetch('/')
-      //   })
-      // })
+      const form = document.getElementsByTagName('form')[0]
+      form.addEventListener('submit', evt => {
+        evt.preventDefault()
+        const data = {}
+        const inputs = document.getElementsByTagName('input')
+        for(input of inputs) {
+          data[input.name] = input.value
+        }
+        fetch('/login', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify(data)
+        })
+        .then(r => r.json())
+        .then(data => {
+          fetch('/', {
+            credentials: 'include'
+          })
+          .then(r => r.text())
+          .then(text => {
+            document.getElementById('result').innerHTML = text
+          })
+        })
+      })
     </script>
   `)
 })
