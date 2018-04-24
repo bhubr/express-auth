@@ -64,6 +64,11 @@ app.get('/', (req, res) => {
   // res.send(`Hello ${who}`)
 })
 
+app.get('/logout', (req, res) => {
+  delete req.session.user
+  res.json({ success: true })
+})
+
 // Gère la récupération des données du formulaire de login
 app.post('/login', (req, res) => {
   console.log(req.body)
