@@ -6,6 +6,7 @@ const session = require('express-session')
 
 const app = express()
 
+app.use(express.static(__dirname))
 // 2 .Ajouter utilisation du module session
 app.use(session({ secret: "cats", resave: true, saveUninitialized: true }))
 app.use(bodyParser.json())
@@ -36,33 +37,26 @@ const checkLoggedInUser = (req, res, next) => {
 //app.use(checkLoggedInUser)
 
 // Une route protégée
-app.get(
-  '/route-privee',
-  checkLoggedInUser,
-  (req, res) => {
-    res.send('Tu es connecté en tant que ' + req.session.user.username)
-  }
-)
 
 // Page d'accueil
-app.get('/', (req, res) => {
-  if(req.session !== undefined &&
-     req.session.user !== undefined
-  ) {
-    // Je sais que j'ai un user connecté
-    const user = req.session.user
-    res.send(`Hello ${user.username}`)
-  }
-  else {
-    // Aucun user connecté
-    res.send('Hello guest. <a href="/login">Please log in</a>')
-  }
-
-  // Façon courte
-  // const who = (req.session && req.session.user) ?
-  //   req.session.user.username : 'guest. <a href="/login">Please log in</a>'
-  // res.send(`Hello ${who}`)
-})
+// app.get('/', (req, res) => {
+//   if(req.session !== undefined &&
+//      req.session.user !== undefined
+//   ) {
+//     // Je sais que j'ai un user connecté
+//     const user = req.session.user
+//     res.send(`Hello ${user.username}`)
+//   }
+//   else {
+//     // Aucun user connecté
+//     res.send('Hello guest. <a href="/login">Please log in</a>')
+//   }
+//
+//   // Façon courte
+//   // const who = (req.session && req.session.user) ?
+//   //   req.session.user.username : 'guest. <a href="/login">Please log in</a>'
+//   // res.send(`Hello ${who}`)
+// })
 
 app.get('/logout', (req, res) => {
   delete req.session.user
@@ -89,51 +83,50 @@ app.post('/login', (req, res) => {
 })
 
 // Affiche le formulaire de login
-app.get('/login', (req, res) => {
-  res.send(
-  /* @html */`
-    <form method="POST" action="/login">
-      <p>Hint: try username foobar with pass FooBar, or username jondoe with pass JonDoe</p>
-      <input name="username" placeholder="username" />
-      <input name="password" placeholder="password" />
-      <button type="submit" class="button">Submit</button>
-    </form>
-    <h6>Réponse du serveur</h6>
-    <div id="result"></div>
+// app.get('/login', (req, res) => {
+//   res.send(
+//   /* @html */`
+//     <form method="POST" action="/login">
+//       <p>Hint: try username foobar with pass FooBar, or username jondoe with pass JonDoe</p>
+//       <input name="username" placeholder="username" />
+//       <input name="password" placeholder="password" />
+//       <button type="submit" class="button">Submit</button>
+//     </form>
+//     <h6>Réponse du serveur</h6>
+//     <div id="result"></div>
+//     <script>
+//     </script>
+//   `)
+// })
+
+// On a transformé l'indexHtml statique en fonction
+const indexHtml = user => /* @html */ `
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>Auth Express</title>
+  </head>
+  <body>
+    <!-- #alert-wrapper is where the JS app inserts notifications -->
+    <div id="alert-wrapper" class="alert" role="alert"></div>
+    <!-- #main is where the JS app inserts HTML content -->
+    <main id="main" role="main" class="container"></main>
+    <script src=page.js></script>
     <script>
-      const form = document.getElementsByTagName('form')[0]
-      form.addEventListener('submit', evt => {
-        evt.preventDefault()
-        // Récupère les champs du formulaire
-        const data = {}
-        const inputs = document.getElementsByTagName('input')
-        for(input of inputs) {
-          data[input.name] = input.value
-        }
-        // Envoie la requête de connexion
-        fetch('/login', {
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json'
-          },
-          // 4. Permettre l'échange de cookies
-          credentials: 'include',
-          body: JSON.stringify(data)
-        })
-        .then(r => r.json())
-        .then(data => {
-          fetch('/', {
-            credentials: 'include'
-          })
-          .then(r => r.text())
-          .then(text => {
-            document.getElementById('result').innerHTML = text
-          })
-        })
-      })
+    // On transforme l'user passé en paramètre en string
+    let loggedInUser = ${ JSON.stringify(user) }
     </script>
-  `)
+    <script src=app.js></script>
+  </body>
+</html>
+`
+
+app.get('*', (req, res) => {
+  res.send(indexHtml(req.session.user))
 })
 
 /**
